@@ -70,3 +70,8 @@ fire_spread_risk = (norm_temp * weather_temp_weighting +
                     (1 - norm_humid) * weather_humid_weighting + 
                     norm_slope * slope_normalized_weighting + 
                     norm_fuel_load * fuel_loading_weighting)
+
+"""
+the weighting will need to be modified based on the data 
+
+"""

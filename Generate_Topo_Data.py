@@ -87,7 +87,5 @@ class vz:
 
 
 elevation_data = Simulate_Data.elevation_data()
-#vz.three_dimension_normalized()
+vz.three_dimension_normalized()
 #vz.var_def_heatmap()
-
-print(elevation.flatten())
