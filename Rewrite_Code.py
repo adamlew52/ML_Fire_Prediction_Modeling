@@ -3,6 +3,9 @@ from sklearn.preprocessing import MinMaxScaler
 import matplotlib.pyplot as plt
 import time
 
+
+#rewrite from "GPT_better_data_rep.py"
+
 grid_size = 20  #this will be dictated by the data collection process from GIS, but for now I am going to use 20x20 for simulations sake
 
 #Practice Data Generation
@@ -73,5 +76,8 @@ fire_spread_risk = (norm_temp * weather_temp_weighting +
 
 """
 the weighting will need to be modified based on the data 
+multiple techniques for this:
+    1. look at nearby squares, if it is above 
 
 """
+
