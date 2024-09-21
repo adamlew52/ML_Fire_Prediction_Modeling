@@ -49,6 +49,37 @@ class ObtainActualData:
             data_resampled = zoom(data, (grid_size_pulled / data.shape[0], grid_size_pulled / data.shape[1]), order=1)
             normalized_data = ObtainActualData.normalize_gis_data(data_resampled, min_value, max_value)
         return normalized_data
+    
+    @staticmethod
+    def downsample_data(data, factor):
+        """
+        Reduces the resolution of the data by a specified factor.
+        Factor should be an integer, e.g., factor=2 reduces the resolution by half.
+        """
+        if factor < 1:
+            raise ValueError("Downsampling factor must be greater than or equal to 1")
+        
+        # Calculate new size after downsampling
+        new_shape = (data.shape[0] // factor, data.shape[1] // factor)
+        
+        # Use zoom from scipy to downsample
+        downsampled_data = zoom(data, (new_shape[0] / data.shape[0], new_shape[1] / data.shape[1]), order=1)
+        
+        return downsampled_data
+    
+    @staticmethod
+    def remove_outliers(data, threshold=3):
+        """
+        Remove outliers by setting values that exceed a threshold of standard deviations to the mean.
+        :param data: 2D numpy array.
+        :param threshold: Number of standard deviations for detecting outliers.
+        :return: Data with outliers removed.
+        """
+        mean = np.mean(data)
+        std = np.std(data)
+        outlier_mask = np.abs(data - mean) > threshold * std
+        data[outlier_mask] = mean  # Replace outliers with mean value
+        return data
 
     @staticmethod
     def normalize_gis_data(data, min_value, max_value):
@@ -153,15 +184,22 @@ fire_map = FireSpreadModel.spread_fire(fire_spread_risk, (5, 5))
 
 #plt.imshow(fire_map, cmap='hot')
 
-file_path = '/Users/adam/Documents/GitHub/ML_Fire_Prediction_Modeling/GIS_Data/raw_tiff/Conifer.tiff'
+file_path = '/Users/adam/Documents/GitHub/ML_Fire_Prediction_Modeling/GIS_Data/raw_tiff/FSTopo Berthoud Pass 394510545.tiff'
+
 file_path, grid_size, min_value, max_value = ObtainActualData.extract_raster_info(file_path)
 normalized_data = ObtainActualData.load_and_normalize_gis_data(file_path, grid_size[0], min_value, max_value)
 
-x = np.linspace(0, 100, normalized_data.shape[1])  # Adjust based on data shape
-y = np.linspace(0, 100, normalized_data.shape[0])  # Adjust based on data shape
+# Reduce the resolution by a factor of 2 (for example)
+downsampling_factor = 100
+normalized_data = ObtainActualData.remove_outliers(normalized_data, threshold=3)
+downsampled_data = ObtainActualData.downsample_data(normalized_data, downsampling_factor)
 
-title = "test grid"
-zlabel = "zlabel"
+# Now plot the downsampled data
+x = np.linspace(0, 100, downsampled_data.shape[1])  # Adjust based on new data shape
+y = np.linspace(0, 100, downsampled_data.shape[0])  # Adjust based on new data shape
+
+title = "Downsampled Grid"
+zlabel = "Elevation (ft)"
 cmap = 'hot'
 
-plot_3d(x, y, normalized_data, title, zlabel, cmap)
+plot_3d(x, y, downsampled_data, title, zlabel, cmap)

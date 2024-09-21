@@ -115,7 +115,7 @@ class Obtain_Actual_Data:
                                     data_resampled.T).T
             
             # Normalize the data
-            normalized_data = normalize_GIS_data(data_resampled, min_value, max_value)
+            normalized_data = Normalize.normalize_GIS_data(data_resampled, min_value, max_value)
          
         return normalized_data
     
@@ -385,6 +385,15 @@ testing_all_generation_data()
 
 """ data resources
 https://earthexplorer.usgs.gov/
+https://data.fs.usda.gov/geodata/rastergateway/OSC/climate.php
+https://www.fs.usda.gov/rm/boise/AWAE/projects/NFS-regional-climate-change-maps/categories/us-raster-layers.html
+https://data.fs.usda.gov/geodata/rastergateway/biomass/index.php
+https://data.fs.usda.gov/geodata/rastergateway/states-regions/states.php
+
+
+
+
+
 
 
 
