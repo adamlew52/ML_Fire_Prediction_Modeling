@@ -1,10 +1,16 @@
 import numpy as np
 from sklearn.preprocessing import MinMaxScaler
 import rasterio
+from rasterio.transform import from_origin
 from scipy.ndimage import zoom
 import matplotlib.pyplot as plt
+import os
 
 grid_size = 10  # Example grid size
+
+# Create output directory for normalized TIFFs
+output_directory = '/Users/adam/Documents/GitHub/ML_Fire_Prediction_Modeling/GIS_Data/normalized_tiff'
+os.makedirs(output_directory, exist_ok=True)
 
 class DataSim:
     @staticmethod
@@ -57,7 +63,24 @@ class ObtainActualData:
             min_value = np.min(data)
             max_value = np.max(data)
         
-        return file_path, grid_size, min_value, max_value
+        return grid_size, min_value, max_value
+    
+    @staticmethod
+    def save_normalized_tiff(file_path, normalized_data, src_transform, src_crs):
+        output_file = os.path.join(output_directory, os.path.basename(file_path))
+        with rasterio.open(
+            output_file,
+            'w',
+            driver='GTiff',
+            height=normalized_data.shape[0],
+            width=normalized_data.shape[1],
+            count=1,
+            dtype=normalized_data.dtype,
+            crs=src_crs,
+            transform=src_transform,
+        ) as dst:
+            dst.write(normalized_data, 1)
+        print(f"Saved normalized data to {output_file}")
 
 class FireSpreadModel:
     @staticmethod
@@ -133,24 +156,38 @@ downsampling_factor = 100  # Change this value to adjust downsampling
 weather_temp, weather_humidity = DataSim.generate_weather_data()
 fuel_loading = DataSim.generate_fuel_loading()
 
-file_path = '/Users/adam/Documents/GitHub/ML_Fire_Prediction_Modeling/GIS_Data/raw_tiff/FSTopo Berthoud Pass 394510545.tiff'
-file_path, grid_size, min_value, max_value = ObtainActualData.extract_raster_info(file_path)
-normalized_data = ObtainActualData.load_and_normalize_gis_data(file_path, grid_size[0], min_value, max_value)
+file_storage = '/Users/adam/Documents/GitHub/ML_Fire_Prediction_Modeling/GIS_Data/raw_tiff'
+tiff_files = [f for f in os.listdir(file_storage) if f.endswith('.tiff')]
 
-# Apply outlier removal and downsampling
-normalized_data = ObtainActualData.remove_outliers(normalized_data, threshold=outlier_threshold)
-downsampled_data = ObtainActualData.downsample_data(normalized_data, downsampling_factor)
+for file_name in tiff_files:
+    file_path = os.path.join(file_storage, file_name)
+    grid_size, min_value, max_value = ObtainActualData.extract_raster_info(file_path)
+    
+    # Load and normalize data
+    with rasterio.open(file_path) as src:
+        src_transform = src.transform
+        src_crs = src.crs
+    
+    normalized_data = ObtainActualData.load_and_normalize_gis_data(file_path, grid_size[0], min_value, max_value)
 
-# Now plot the downsampled data in 2D and 3D
-x = np.linspace(0, 100, downsampled_data.shape[1])
-y = np.linspace(0, 100, downsampled_data.shape[0])
+    # Apply outlier removal and downsampling
+    normalized_data = ObtainActualData.remove_outliers(normalized_data, threshold=outlier_threshold)
+    downsampled_data = ObtainActualData.downsample_data(normalized_data, downsampling_factor)
 
-title = "Downsampled Grid"
-zlabel = "Elevation (ft)"
-cmap = 'hot'
+    # Save normalized and processed TIFF
+    ObtainActualData.save_normalized_tiff(file_path, downsampled_data, src_transform, src_crs)
 
-# 3D plot
-plot_3d(x, y, downsampled_data, title, zlabel, cmap)
+    # Now plot the downsampled data in 2D and 3D
+    x = np.linspace(0, 100, downsampled_data.shape[1])
+    y = np.linspace(0, 100, downsampled_data.shape[0])
 
-# 2D plot
-plot_2d(downsampled_data, title, cmap)
+    # Set title to the name of the file without the extension
+    title = os.path.splitext(file_name)[0]  # Remove the extension
+    zlabel = "Elevation (ft)"
+    cmap = 'hot'
+
+    # 3D plot
+#    plot_3d(x, y, downsampled_data, title, zlabel, cmap)
+
+    # 2D plot
+    #plot_2d(downsampled_data, title, cmap)
