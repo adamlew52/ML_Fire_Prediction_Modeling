@@ -3,34 +3,10 @@ from sklearn.preprocessing import MinMaxScaler
 import rasterio
 from scipy.ndimage import zoom
 import matplotlib.pyplot as plt
-import os
 
 grid_size = 10  # Example grid size
 
 class DataSim:
-    @staticmethod
-    def realistic_data_gen():
-        x = np.linspace(0, 100, grid_size)
-        y = np.linspace(0, 100, grid_size)
-        x, y = np.meshgrid(x, y)
-
-        min_wavelength, max_wavelength = 20, 50
-        max_elevation = 60
-
-        min_frequency = 1 / max_wavelength
-        max_frequency = 1 / min_wavelength
-
-        frequency_map_x = np.random.uniform(min_frequency, max_frequency, size=x.shape)
-        frequency_map_y = np.random.uniform(min_frequency, max_frequency, size=y.shape)
-
-        amplitude = 10
-        elevation = 50 + amplitude * np.sin(x * frequency_map_x * 2 * np.pi) * np.cos(y * frequency_map_y * 2 * np.pi)
-        elevation += 5 * np.random.normal(0, 1, size=x.shape)
-
-        elevation -= elevation.max() - max_elevation
-        elevation = np.clip(elevation, None, max_elevation)
-        return x, y, elevation
-
     @staticmethod
     def generate_weather_data():
         weather_temp = np.random.uniform(20, 40, (grid_size, grid_size))
@@ -52,33 +28,20 @@ class ObtainActualData:
     
     @staticmethod
     def downsample_data(data, factor):
-        """
-        Reduces the resolution of the data by a specified factor.
-        Factor should be an integer, e.g., factor=2 reduces the resolution by half.
-        """
         if factor < 1:
             raise ValueError("Downsampling factor must be greater than or equal to 1")
         
-        # Calculate new size after downsampling
         new_shape = (data.shape[0] // factor, data.shape[1] // factor)
-        
-        # Use zoom from scipy to downsample
         downsampled_data = zoom(data, (new_shape[0] / data.shape[0], new_shape[1] / data.shape[1]), order=1)
         
         return downsampled_data
     
     @staticmethod
     def remove_outliers(data, threshold=3):
-        """
-        Remove outliers by setting values that exceed a threshold of standard deviations to the mean.
-        :param data: 2D numpy array.
-        :param threshold: Number of standard deviations for detecting outliers.
-        :return: Data with outliers removed.
-        """
         mean = np.mean(data)
         std = np.std(data)
         outlier_mask = np.abs(data - mean) > threshold * std
-        data[outlier_mask] = mean  # Replace outliers with mean value
+        data[outlier_mask] = mean
         return data
 
     @staticmethod
@@ -87,30 +50,10 @@ class ObtainActualData:
         return scaler.fit_transform(data.flatten().reshape(-1, 1)).reshape(data.shape)
 
     @staticmethod
-    def normalize_tiff(input_tiff_path, output_tiff_path=None):
-        with rasterio.open(input_tiff_path) as src:
-            data = src.read(1)
-            scaler = MinMaxScaler()
-            data_normalized = scaler.fit_transform(data.flatten().reshape(-1, 1)).reshape(data.shape)
-
-            if output_tiff_path:
-                with rasterio.open(output_tiff_path, 'w', driver='GTiff', height=data.shape[0], width=data.shape[1],
-                                   count=1, dtype=data_normalized.dtype, crs=src.crs, transform=src.transform) as dst:
-                    dst.write(data_normalized, 1)
-
-        return data_normalized
-
-    @staticmethod
     def extract_raster_info(file_path):
-        # Open the raster file
         with rasterio.open(file_path) as src:
-            # Extract grid size (number of rows and columns)
             grid_size = (src.height, src.width)
-            
-            # Read the raster data as a 2D numpy array
-            data = src.read(1)  # Read the first band
-            
-            # Calculate min and max values
+            data = src.read(1)
             min_value = np.min(data)
             max_value = np.max(data)
         
@@ -165,7 +108,7 @@ class FireSpreadModel:
 def plot_3d(x, y, elevation, title, zlabel, cmap):
     fig = plt.figure(figsize=(10, 7))
     ax = fig.add_subplot(111, projection='3d')
-    x, y = np.meshgrid(x, y)  # Ensure x and y are properly meshed
+    x, y = np.meshgrid(x, y)
     surf = ax.plot_surface(x, y, elevation, cmap=cmap, edgecolor='k')
     ax.set_xlabel('X (ft)')
     ax.set_ylabel('Y (ft)')
@@ -173,33 +116,41 @@ def plot_3d(x, y, elevation, title, zlabel, cmap):
     ax.set_title(title)
     plt.show()
 
+def plot_2d(data, title, cmap):
+    plt.figure(figsize=(10, 7))
+    plt.imshow(data, cmap=cmap, origin='lower')
+    plt.colorbar(label='Elevation (ft)')
+    plt.title(title)
+    plt.xlabel('X (grid units)')
+    plt.ylabel('Y (grid units)')
+    plt.show()
+
+# User-defined parameters for tuning
+outlier_threshold = 3  # Change this value to adjust outlier detection
+downsampling_factor = 100  # Change this value to adjust downsampling
+
 # Example usage
 weather_temp, weather_humidity = DataSim.generate_weather_data()
-elevation = DataSim.realistic_data_gen()[2]
 fuel_loading = DataSim.generate_fuel_loading()
 
-slope = FireSpreadModel.compute_slope(elevation)
-fire_spread_risk = FireSpreadModel.combine_features(weather_temp, weather_humidity, slope, fuel_loading)
-fire_map = FireSpreadModel.spread_fire(fire_spread_risk, (5, 5))
-
-#plt.imshow(fire_map, cmap='hot')
-
 file_path = '/Users/adam/Documents/GitHub/ML_Fire_Prediction_Modeling/GIS_Data/raw_tiff/FSTopo Berthoud Pass 394510545.tiff'
-
 file_path, grid_size, min_value, max_value = ObtainActualData.extract_raster_info(file_path)
 normalized_data = ObtainActualData.load_and_normalize_gis_data(file_path, grid_size[0], min_value, max_value)
 
-# Reduce the resolution by a factor of 2 (for example)
-downsampling_factor = 100
-normalized_data = ObtainActualData.remove_outliers(normalized_data, threshold=3)
+# Apply outlier removal and downsampling
+normalized_data = ObtainActualData.remove_outliers(normalized_data, threshold=outlier_threshold)
 downsampled_data = ObtainActualData.downsample_data(normalized_data, downsampling_factor)
 
-# Now plot the downsampled data
-x = np.linspace(0, 100, downsampled_data.shape[1])  # Adjust based on new data shape
-y = np.linspace(0, 100, downsampled_data.shape[0])  # Adjust based on new data shape
+# Now plot the downsampled data in 2D and 3D
+x = np.linspace(0, 100, downsampled_data.shape[1])
+y = np.linspace(0, 100, downsampled_data.shape[0])
 
 title = "Downsampled Grid"
 zlabel = "Elevation (ft)"
 cmap = 'hot'
 
+# 3D plot
 plot_3d(x, y, downsampled_data, title, zlabel, cmap)
+
+# 2D plot
+plot_2d(downsampled_data, title, cmap)
