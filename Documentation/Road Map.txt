@@ -1,0 +1,12 @@
+sup, this is a roadmap of goals and features i want to add in the near future. just trying to get it out right now.
+
+
+
+
+
+1. better accuracy with map granularities
+2. make directory finding automated
+3. basic GUI
+4. add direct .tif/folder upload function
+5. more alterations to data based on further data
+    5a. add current/predicted rainfall tiff data and normalize it 

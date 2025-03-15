@@ -1,3 +1,8 @@
+#
+# Built by Adam Lewis, "official release" - 04/14/25
+# 
+#
+  
 import numpy as np
 from sklearn.preprocessing import MinMaxScaler
 import rasterio
@@ -9,8 +14,24 @@ import os
 grid_size = 10  # Example grid size
 
 # Create output directory for normalized TIFFs
-output_directory = '/Users/adam/Documents/GitHub/ML_Fire_Prediction_Modeling/GIS_Data/normalized_tiff'
+output_directory = 'All_Map_Data/GIS_Data/normalized_tiff'
 os.makedirs(output_directory, exist_ok=True)
+
+def Normalized_Data_Exists():
+    adjacent_folder = "GIS_Data/raw_tiff"
+    base_directory = "All_Map_Data/GIS_Data" #MODIFY
+
+    # Construct the path to the folder
+    folder_path = os.path.join(base_directory, adjacent_folder)
+
+    # Check if the file exists in the folder
+    file_name = "example_file.tiff"  # Replace with the naming convention or pattern
+    file_path = os.path.join(folder_path, file_name)
+
+    if os.path.exists(file_path):
+        print(f"File '{file_name}' exists in '{adjacent_folder}'.")
+    else:
+        print(f"File '{file_name}' does not exist in '{adjacent_folder}'.")
 
 class DataSim:
     @staticmethod
@@ -156,7 +177,7 @@ downsampling_factor = 100  # Change this value to adjust downsampling
 weather_temp, weather_humidity = DataSim.generate_weather_data()
 fuel_loading = DataSim.generate_fuel_loading()
 
-file_storage = '/Users/adam/Documents/GitHub/ML_Fire_Prediction_Modeling/GIS_Data/raw_tiff'
+file_storage = 'GitHub/ML_Fire_Prediction_Modeling/All_Map_Data/GIS_Data/raw_tiff' #MODIFY
 tiff_files = [f for f in os.listdir(file_storage) if f.endswith('.tiff')]
 
 for file_name in tiff_files:
@@ -187,7 +208,8 @@ for file_name in tiff_files:
     cmap = 'hot'
 
     # 3D plot
-#    plot_3d(x, y, downsampled_data, title, zlabel, cmap)
+    
+    #plot_3d(x, y, downsampled_data, title, zlabel, cmap)
 
     # 2D plot
-    #plot_2d(downsampled_data, title, cmap)
+    plot_2d(downsampled_data, title, cmap)

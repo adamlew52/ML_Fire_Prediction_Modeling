@@ -1,0 +1,100 @@
+# README: GIS Data Normalization and Fire Spread Model
+
+## Overview
+This Python script processes GIS data to normalize and downsample elevation and other spatial data from raster TIFF files. It includes functionality to simulate weather data and fuel loading, and it incorporates a fire spread model to evaluate fire risk based on multiple environmental factors. The script outputs normalized TIFF files and provides 2D visualizations of the processed data.
+
+## Requirements
+Ensure that the following Python libraries are installed:
+- `numpy`
+- `sklearn`
+- `rasterio`
+- `scipy`
+- `matplotlib`
+  
+You can install them using `pip`:
+```bash'''
+pip install numpy scikit-learn rasterio scipy matplotlib
+
+
+
+## Files and Directories
+Raw Data Directory:
+
+Path: All_Map_Data/GIS_Data/raw_tiff/
+    - This directory should contain the raw TIFF files that you want to process. The script will look for .tiff files in this directory.
+
+Output Directory:
+
+    - Path: All_Map_Data/GIS_Data/normalized_tiff/
+
+The script will create this directory (if it doesn't already exist) and save the normalized and downsampled TIFF files here.
+
+
+
+
+##How to Use
+1. Set Up Your Data
+    Ensure your raw GIS data (e.g., elevation data in TIFF format) is placed in the All_Map_Data/GIS_Data/raw_tiff/ directory. Modify the directory paths in the script if your data is stored elsewhere.
+
+2. Modify Parameters (Optional)
+    In the script, you can adjust several parameters based on your needs:
+
+    Outlier Threshold: The script removes outliers using a standard deviation threshold (outlier_threshold = 3 by default). You can adjust this value to make outlier detection more or less strict.
+    Downsampling Factor: Controls how much the data is downsampled (default is downsampling_factor = 100). Smaller values will retain more detail, while larger values will downsample the data more.
+
+3. Run the Script
+    Simply run the script. It will:
+
+    - Read each TIFF file from the raw data directory.
+    - Normalize and downsample the data.
+    - Detect and remove outliers.
+    - Save the processed data as new TIFF files in the normalized_tiff/ directory.
+    - Optionally, it will plot 2D heatmaps of the processed data.
+
+Example of Running the Script:
+    
+
+bash
+Copy
+python process_gis_data.py
+
+
+4. Visualize the Data
+    The script generates 2D heatmap visualizations of the processed data using matplotlib. You can adjust the color map (cmap) in the plotting section for different visual styles.
+
+5. Fire Spread Model (Optional)
+
+The script includes a basic fire spread model that uses:
+
+    - Weather data (temperature and humidity),
+    - Slope data (calculated from elevation),
+    - Fuel loading (generated randomly for this example).
+    - You can customize the fire spread model by adjusting the weights in the combine_features function.
+
+
+
+
+## Functions Overview
+
+Normalized_Data_Exists() - Checks if a specific raw GIS data file exists in the raw data directory.
+
+DataSim - Simulates random weather data (temperature and humidity) and fuel loading values for fire modeling
+    - generate_weather_data(): Generates random temperature and humidity grids.
+    - generate_fuel_loading(): Generates random fuel loading data.
+
+
+ObtainActualData - Handles operations related to reading, normalizing, and saving GIS data.
+    - load_and_normalize_gis_data(): Reads and normalizes raw GIS data.
+    - downsample_data(): Downsamples data to a lower resolution.
+    - remove_outliers(): Removes outliers from the data.
+
+
+FireSpreadModel - Computes and models the spread of fire based on weather, slope, and fuel loading data.
+    - compute_slope(): Calculates the slope from elevation data.
+    - combine_features(): Combines weather, slope, and fuel loading data into a single fire spread risk map.
+    - spread_fire(): Models the spread of fire from an initial starting location.
+    - normalize_data(): Normalizes input data for fire spread calculations.
+
+plot_3d() - Plots a 3D surface plot of the data.
+
+plot_2d() - Plots a 2D heatmap of the data.
