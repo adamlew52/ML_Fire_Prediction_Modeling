@@ -1,5 +1,13 @@
 # README: GIS Data Normalization and Fire Spread Model
 
+
+#
+# Written by Adam Lewis for (currently) private use
+# 'Official Upload' - 04/14
+# feel free to reach out if you have any questions. I know it can be a bit of spaghetti right now, I'm working on it in my free time
+# join the telegram: Fire Prediction App Building
+# 
+
 ## Overview
 This Python script processes GIS data to normalize and downsample elevation and other spatial data from raster TIFF files. It includes functionality to simulate weather data and fuel loading, and it incorporates a fire spread model to evaluate fire risk based on multiple environmental factors. The script outputs normalized TIFF files and provides 2D visualizations of the processed data.
 
@@ -11,13 +19,13 @@ Ensure that the following Python libraries are installed:
 - `scipy`
 - `matplotlib`
   
-You can install them using `pip`:
+# You can install them using `pip`:
 ```bash'''
 pip install numpy scikit-learn rasterio scipy matplotlib
 
 
 
-## Files and Directories
+## Files and Directories: 
 Raw Data Directory:
 
 Path: All_Map_Data/GIS_Data/raw_tiff/
